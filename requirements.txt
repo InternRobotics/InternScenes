@@ -3,6 +3,7 @@
 # Scientific Computing
 numpy==1.24.4
 scipy==1.14.1
+scikit-learn==1.8.0
 
 # Computer Vision & Image Processing
 opencv-python==4.10.0.84
@@ -13,9 +14,14 @@ scikit-image==0.24.0
 trimesh==4.4.7
 open3d==0.18.0
 
-# OpenUsd 
+# Geometry & Pathfinding
+shapely==2.1.2
+pathfinding==1.0.20
+
+# Configuration & Utilities
+PyYAML==6.0.3
+natsort==8.4.0
+tqdm==4.67.3
+
+# OpenUsd
 usd-core==24.11
-
-
-
-

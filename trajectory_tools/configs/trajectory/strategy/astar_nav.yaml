@@ -1,0 +1,20 @@
+# A* point-to-point navigation strategy.
+
+strategy:
+  name: astar_nav
+  params:
+    minimum_distance: 5.0
+    use_optimizer: true
+    optimizer_clearance: 0.5
+    optimizer_lambda_smooth: 0.3
+    initial_sample_step: 3
+
+camera:
+  pitch_deg_range: [0, 15]    # random uniform
+  height_range: [1.2, 1.7]    # random uniform
+  sample_number: 20
+
+postprocess:
+  min_step_distance: 0.3
+  min_step_angle: 0.15
+  min_turn_distance: 0.15

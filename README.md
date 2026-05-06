@@ -1,3 +1,4 @@
+[English](README.md) | [中文](README_CN.md)
 
 <p align="center">
 <div style="text-align: center;">
@@ -150,11 +151,14 @@ The layout format is listed as follows:
 ## 📖 Tutorial
 We provide a simple tutorial [here](https://github.com/InternRobotics/InternScenes/blob/master/tutorial/tutorial.ipynb) as a guideline for the visualization and basic usage of our dataset. Welcome to try and post your suggestions!
 
+### Trajectory Generation & Rendering
+For generating camera trajectories and rendering scenes in Isaac Sim, please refer to [the trajectory tools](trajectory_tools/README.md).
+
 
 ## 📋 TODO List
  - [x] Release the InternScenes-Real2Sim v1.0.
- - [ ] Release trajectories for each scene and rendering scripts.
- - [ ] Release the paper.
+ - [x] Release trajectories for each scene and rendering scripts.
+ - [x] Release the paper.
  - [ ] Polish the codes of building the InternScenes-Real2Sim.
  - [ ] Release the InternScenes-Real2Sim v2.0.
  - [ ] Release the InternScenes-Synthetic v1.0.

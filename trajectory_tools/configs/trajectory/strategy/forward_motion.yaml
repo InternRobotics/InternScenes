@@ -1,0 +1,14 @@
+# Straight-line forward-motion trajectory strategy.
+
+strategy:
+  name: forward_motion
+  params:
+    minimum_distance: 4.0
+    max_retries: 50
+    waypoint_spacing: 0.1
+    min_wall_clearance: 0.15
+
+camera:
+  pitch_deg: 0                  # look straight ahead
+  height_range: [1.2, 1.7]
+  sample_number: 20

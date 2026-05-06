@@ -1,0 +1,18 @@
+# Default trajectory generation config — shared scene_map + postprocess settings.
+# Strategy-specific YAML files in strategy/ override only the strategy section.
+
+scene_map:
+  grid_resolution: 0.05
+  safe_distance: 0.20
+  ceiling_offset: 1.8
+  cluster_eps: 0.2
+  cluster_safe_threshold: 0.05
+  cluster_min_points: 1000
+  min_overlap_ratio: 0.3
+
+postprocess:
+  min_step_distance: 0.3
+  min_step_angle: 0.15
+  min_turn_distance: 0.15
+  bspline_degree: 3
+  bspline_step: 100
