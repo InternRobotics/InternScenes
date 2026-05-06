@@ -156,14 +156,12 @@ For generating camera trajectories and rendering scenes in Isaac Sim, please ref
 
 
 ## 📋 TODO List
- - [x] Release the InternScenes-Real2Sim v1.0.
+ - [x] Release the InternScenes-Real2Sim.
  - [x] Release trajectories for each scene and rendering scripts.
  - [x] Release the paper.
- - [ ] Polish the codes of building the InternScenes-Real2Sim.
- - [ ] Release the InternScenes-Real2Sim v2.0.
- - [ ] Release the InternScenes-Synthetic v1.0.
- - [ ] Polish the codes of building the InternScenes-Synthetic.
- - [ ] Release the InternScenes-Synthetic v2.0.
+ - [x] Polish the codes of building the InternScenes-Real2Sim.
+ - [x] Polish the codes of building the InternScenes-Synthetic.
+ - [ ] Release the InternScenes-Synthetic.
 
 ## 🧷 Citation
 ```BibTex

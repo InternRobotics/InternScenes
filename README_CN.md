@@ -151,14 +151,12 @@ InternScenes-Real2Sim/
 
 
 ## 待办事项
- - [x] 发布 InternScenes-Real2Sim v1.0。
+ - [x] 发布 InternScenes-Real2Sim。
  - [x] 发布各场景的轨迹和渲染脚本。
  - [x] 发布论文。
- - [ ] 完善 InternScenes-Real2Sim 构建代码。
- - [ ] 发布 InternScenes-Real2Sim v2.0。
- - [ ] 发布 InternScenes-Synthetic v1.0。
- - [ ] 完善 InternScenes-Synthetic 构建代码。
- - [ ] 发布 InternScenes-Synthetic v2.0。
+ - [x] 完善 InternScenes-Real2Sim 构建代码。
+ - [x] 完善 InternScenes-Synthetic 构建代码。
+ - [ ] 发布 InternScenes-Synthetic。
 
 ## 引用
 ```BibTex
