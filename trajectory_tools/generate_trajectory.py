@@ -8,7 +8,6 @@ import json
 import os
 import shutil
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import numpy as np
 import open3d as o3d
@@ -20,7 +19,6 @@ from utils.pcd_utils.parse_scene_floor import (
     extract_floor_heights,
     fix_floor_height_from_metadata,
 )
-from utils.shortlist_utils import load_shortlist_scenes
 from utils.trajectory_utils import (
     PostProcessConfig,
     SceneMap,
@@ -29,6 +27,7 @@ from utils.trajectory_utils import (
     load_config,
 )
 from utils.usd_utils.converters import usd2pcd
+from utils.usd_utils.path_utils import find_single_usd
 from utils.usd_utils.stage_utils import get_all_mesh_prims
 
 DEFAULT_SCENE_DIR = "data/source"
@@ -66,17 +65,6 @@ def _save_report(report_path: str, report: dict) -> None:
     with open(tmp, "w") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
     os.replace(tmp, report_path)
-
-
-def _find_usd_file(scene_path: str) -> tuple[str | None, int]:
-    usd_files = [
-        str(path)
-        for path in Path(scene_path).glob("*.usd")
-        if "copy.usd" not in path.name
-    ]
-    if len(usd_files) == 1:
-        return usd_files[0], 1
-    return None, len(usd_files)
 
 
 def _parse_scene(usd_path: str) -> SceneData | None:
@@ -266,8 +254,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--part", type=int, default=1, help="Dataset part index.")
     parser.add_argument("--usd", type=int, required=True, help="USD folder id, e.g. 101 for 101_usd.")
     parser.add_argument("--specific", default=None, help="Optional single scene name inside the USD folder.")
-    parser.add_argument("--shortlist", default=None, help="Optional scene_shortlist.csv.")
-    parser.add_argument("--min-rating", type=int, default=3, help="Minimum rating used with --shortlist.")
     parser.add_argument("--scene-dir", default=DEFAULT_SCENE_DIR, help="Root scene directory.")
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR, help="Root trajectory output directory.")
     parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="Root parsed-scene cache directory.")
@@ -293,8 +279,6 @@ def _parse_overrides(raw: list[str]) -> dict:
 def _resolve_scenes(args: argparse.Namespace, usd_folder: str) -> list[str]:
     if args.specific:
         return [args.specific]
-    if args.shortlist:
-        return load_shortlist_scenes(args.shortlist, args.usd, args.min_rating)
     return sorted(
         name for name in os.listdir(usd_folder)
         if os.path.isdir(os.path.join(usd_folder, name))
@@ -331,9 +315,13 @@ def process_usd_folder(args: argparse.Namespace, cfg) -> None:
                 continue
 
         scene_path = os.path.join(usd_folder, scene_name)
-        usd_path, found_count = _find_usd_file(scene_path)
+        usd_path, usd_files = find_single_usd(scene_path)
         if usd_path is None:
-            report[scene_name] = {"status": "skipped", "reason": f"expected 1 USD, found {found_count}"}
+            found = ", ".join(os.path.basename(path) for path in usd_files) or "none"
+            report[scene_name] = {
+                "status": "skipped",
+                "reason": f"expected exactly 1 USD file, found {len(usd_files)}: {found}",
+            }
             _save_report(report_path, report)
             continue
 

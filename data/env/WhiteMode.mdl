@@ -1,0 +1,31 @@
+// Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+//
+// NVIDIA CORPORATION and its licensors retain all intellectual property
+// and proprietary rights in and to this software, related documentation
+// and any modifications thereto.  Any use, reproduction, disclosure or
+// distribution of this software and related documentation without an express
+// license agreement from NVIDIA CORPORATION is strictly prohibited.
+//
+
+// adjusted to be alittle darker, not harsh white, changed name to Whitemode
+
+mdl 1.5;
+import ::anno::*;
+import ::df::diffuse_reflection_bsdf;
+import ::state::normal;
+
+export material WhiteMode(
+
+	color diffuse_color_constant = color(.99f)
+	[[
+		anno::display_name("Base Color"),
+		anno::description("This is the base color")
+	]]
+)
+ = 
+    let {
+        material_surface surface(
+            ::df::diffuse_reflection_bsdf(diffuse_color_constant));
+    } in material(
+            thin_walled: false,
+            surface: surface);

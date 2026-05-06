@@ -147,7 +147,7 @@ InternScenes-Real2Sim/
 我们提供了一个简单的教程[在此](https://github.com/InternRobotics/InternScenes/blob/master/tutorial/tutorial.ipynb)，作为数据集可视化和基本用法的指南。欢迎尝试并提出建议！
 
 ### 轨迹生成与渲染
-关于生成相机轨迹和在 Isaac Sim 中渲染场景，请参阅[轨迹工具](trajectory_tools/README.md)。
+关于生成相机轨迹和在 Isaac Sim 中渲染场景，请参阅[轨迹工具](trajectory_tools/README_CN.md)。
 
 
 ## 待办事项

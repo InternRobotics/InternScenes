@@ -12,6 +12,8 @@ from typing import Any
 
 from natsort import natsorted
 
+from utils.usd_utils.path_utils import find_single_usd
+
 LAUNCHER_SETTINGS = {
     "headless": True,
     "anti_aliasing": 4,
@@ -88,17 +90,11 @@ class TrajectoryRenderer:
             if name.endswith(".json")
         )
 
-    def _get_scene_asset_path(self, scene_name: str) -> str | None:
+    def _get_scene_asset_path(self, scene_name: str) -> tuple[str | None, list[str]]:
         scene_asset_dir = os.path.join(self.scene_asset_dir, scene_name)
         if not os.path.isdir(scene_asset_dir):
-            return None
-        usd_files = [
-            name for name in os.listdir(scene_asset_dir)
-            if name.endswith(".usd") and "_copy.usd" in name
-        ]
-        if not usd_files:
-            return None
-        return os.path.join(scene_asset_dir, usd_files[0])
+            return None, []
+        return find_single_usd(scene_asset_dir)
 
     def _check_render_complete(
         self,
@@ -151,9 +147,9 @@ class TrajectoryRenderer:
             return os.path.exists(intrinsic_path)
         return True
 
-    def _compose_render_settings(self, scene_copy_usd_path: str) -> dict[str, Any]:
+    def _compose_render_settings(self, scene_usd_path: str) -> dict[str, Any]:
         world, stage, meters_per_unit = load_scene_to_world(
-            scene_copy_usd_path,
+            scene_usd_path,
             self.default_mdl_path,
         )
         camera = init_camera(
@@ -212,9 +208,14 @@ class TrajectoryRenderer:
             print(f"[Renderer] Skipping {scene_name}: no trajectories for {self.strategy_name}")
             return
 
-        scene_usd_path = self._get_scene_asset_path(scene_name)
+        scene_usd_path, usd_files = self._get_scene_asset_path(scene_name)
         if scene_usd_path is None:
-            print(f"[Renderer] Skipping {scene_name}: no *_copy.usd found")
+            scene_asset_dir = os.path.join(self.scene_asset_dir, scene_name)
+            found = ", ".join(os.path.basename(path) for path in usd_files) or "none"
+            print(
+                f"[Renderer] Skipping {scene_name}: expected exactly 1 USD file "
+                f"in {scene_asset_dir}, found {len(usd_files)}: {found}"
+            )
             return
 
         if trajectory_index is not None:

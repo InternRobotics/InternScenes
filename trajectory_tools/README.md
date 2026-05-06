@@ -1,43 +1,26 @@
-[English](#english) | [中文](#中文)
+[English](README.md) | [中文](README_CN.md)
 
----
+# Trajectory Tools
 
-# English
+`trajectory_tools` provides the release pipeline for InternScenes camera trajectories:
 
-## Trajectory Generation and Rendering Pipeline
+1. Generate camera pose trajectories from USD scene assets.
+2. Render RGB, depth, instance segmentation, shading, and randomized-light shading in Isaac Sim.
 
-This directory is a streamlined distribution that contains two things:
+This document only covers data contracts, configuration, and command usage. Environment setup is documented in the repository-level README files.
 
-1. Generate camera trajectory JSON files from USD scenes.
-2. Render RGB, RGBD, depth, instance segmentation, shading, and other data along trajectories in Isaac Sim.
+## Data Layout
 
-### Environment
-
-Trajectory generation depends on Python scientific computing and USD/Open3D environments; rendering must run in an Isaac Sim Python environment that can import `isaacsim`, `omni`, and `pxr`.
-
-Install Python dependencies first:
-
-```bash
-pip install -r requirements.txt
-```
-
-Isaac Sim, USD Python bindings, and NVIDIA `omni` modules are typically provided by the Isaac Sim environment and are not recommended to install via `pip` separately.
-
-### Data Directory
-
-Default directory organization:
+Commands in this document are intended to run from the repository root. Default paths are resolved relative to the current working directory.
 
 ```text
-trajectory_tools/
 data/
   source/
     GRScenes/
       part1/
         101_usd/
           scene_00001/
-            scene.usd          # Trajectory generation reads: non-copy USD
-            scene_copy.usd     # Rendering reads: filename must contain _copy.usd
-data/
+            scene.usd          # the only USD file in the scene directory
   env/
     default_no_specular.mdl
     WhiteMode.mdl
@@ -48,15 +31,17 @@ output/
   render/
 ```
 
-If your data is not in the default path, you can specify with `--scene-dir`, `--output-dir`, `--cache-dir`, `--data-dir`, `--trajectory-dir`.
+Each scene directory must contain exactly one direct `.usd` file. Both trajectory generation and rendering load that file. If a scene directory contains zero or multiple USD files, the scene is skipped instead of selecting an arbitrary asset.
 
-### Generate Trajectories
+`data/env` contains material resources used by rendering and material-reference repair.
 
-Run from the `trajectory_tools/` directory:
+## Generate Trajectories
+
+Generate trajectories for every scene under `data/source/{dataset}/part{part}/{usd}_usd/`:
 
 ```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
+python trajectory_tools/generate_trajectory.py \
+  --config trajectory_tools/configs/trajectory/strategy/astar_nav.yaml \
   --dataset GRScenes \
   --part 1 \
   --usd 101
@@ -65,347 +50,227 @@ python generate_trajectory.py \
 Process a single scene:
 
 ```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
+python trajectory_tools/generate_trajectory.py \
+  --config trajectory_tools/configs/trajectory/strategy/astar_nav.yaml \
+  --dataset GRScenes \
   --part 1 \
   --usd 101 \
   --specific scene_00001
 ```
 
-Use the forward motion strategy:
+Use the straight-line forward-motion strategy:
 
 ```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/forward_motion.yaml \
+python trajectory_tools/generate_trajectory.py \
+  --config trajectory_tools/configs/trajectory/strategy/forward_motion.yaml \
+  --dataset GRScenes \
   --part 1 \
   --usd 101
 ```
 
-Override YAML parameters:
+Override scalar YAML values from the command line:
 
 ```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
-  --part 1 \
-  --usd 101 \
-  --override camera.sample_number=5 strategy.params.minimum_distance=3.0
-```
-
-Optional shortlist CSV:
-
-```csv
-usd_id,scene_id,rating
-101,scene_00001,3
-101,scene_00002,2
-```
-
-Run with shortlist:
-
-```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
-  --part 1 \
-  --usd 101 \
-  --shortlist path/to/scene_shortlist.csv \
-  --min-rating 3
-```
-
-Trajectory output:
-
-```text
-output/camera_poses/GRScenes/part1/101_usd/scene_00001/astar_nav/f0_t0.json
-output/camera_poses/GRScenes/part1/101_usd/generation_report_astar_nav.json
-```
-
-Single-frame trajectory format:
-
-```json
-[
-  [x, y, z],
-  [qw, qx, qy, qz]
-]
-```
-
-Position units are meters; quaternion is in scalar-first order.
-
-### Rendering
-
-Rendering must run in the Isaac Sim Python environment:
-
-```bash
-python render_trajectory.py \
+python trajectory_tools/generate_trajectory.py \
+  --config trajectory_tools/configs/trajectory/strategy/astar_nav.yaml \
   --dataset GRScenes \
   --part 1 \
   --usd 101 \
-  --strategy astar_nav
-```
-
-Default renders RGBD. Select other output types:
-
-```bash
-# RGB
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --rgb
-
-# Depth
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --depth
-
-# RGB + depth + instance
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --rgb --depth --instance
-
-# White material shading
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --shading
-
-# Shading with randomized lights
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --shading-randlight
+  --override camera.sample_number=5 strategy.params.minimum_distance=3.0
 ```
 
 Common options:
 
-```bash
-# Panorama rendering, output 2048 x 1024 equirectangular image
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --panorama
-
-# Render only one scene
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --scene scene_00001
-
-# Render the Nth trajectory in a scene
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --trajectory-index 0
-
-# Skip MP4, keep only frame files
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --no-video
-```
-
-Rendering output:
-
-```text
-output/render/GRScenes/part1/101_usd/scene_00001/astar_nav/f0_t0/
-  camera_poses.json
-  camera_intrinsic.json
-  rgb/
-    0.jpg
-  depth/
-    0.npy
-  instance/
-    0_seg.pkl
-  shading/
-    0.jpg
-  rgb.mp4
-```
-
-Output type descriptions:
-
-| Type | Files | Description |
+| Option | Default | Description |
 | --- | --- | --- |
-| `rgb` | `.jpg`, `.mp4` | Standard RGB |
-| `rgbd` | `rgb/*.jpg`, `depth/*.npy`, `rgb.mp4` | RGB and depth together |
-| `depth` | `.npy` | float16 depth in meters |
-| `instance` | `*_seg.pkl` | Instance mask and ID mapping |
-| `shading` | `.jpg`, `.mp4` | Shading under WhiteMode material |
-| `shading_randlight` | `.jpg`, `.mp4`, `light_params.json` | Shading with randomized lighting |
+| `--dataset` | `GRScenes` | Dataset name under `--scene-dir`. |
+| `--part` | `1` | Dataset part index. |
+| `--usd` | required | USD folder id, for example `101` for `101_usd`. |
+| `--specific` | unset | Restrict generation to one scene directory. |
+| `--scene-dir` | `data/source` | Root directory containing dataset scene assets. |
+| `--output-dir` | `output/camera_poses` | Root directory for generated trajectory JSON files. |
+| `--cache-dir` | `output/scene_cache` | Root directory for parsed point-cloud caches. |
+| `--override` | unset | Dotted scalar config overrides such as `camera.sample_number=5`. |
+| `--retry-failed` | `false` | Regenerate scenes marked `failed` in the existing report. |
+| `--force-reparse` | `false` | Ignore cached point clouds and parse USD files again. |
 
-Re-running the same command automatically skips already-completed trajectory outputs.
+## Trajectory Configuration
 
----
+Generation configs are YAML files. The loader first reads `configs/trajectory/default.yaml`, then deep-merges the selected strategy YAML, then applies `--override`.
 
-# 中文
+```yaml
+scene_map:
+  grid_resolution: 0.05
+  safe_distance: 0.20
+  ceiling_offset: 1.8
+  cluster_eps: 0.2
+  cluster_safe_threshold: 0.05
+  cluster_min_points: 1000
+  min_overlap_ratio: 0.3
 
-## 轨迹生成与渲染流水线
+strategy:
+  name: astar_nav
+  params: {}
 
-这个目录是一个精简发布版，只包含两件事：
+camera:
+  pitch_deg: 0
+  pitch_deg_range: [0, 15]
+  height: 1.8
+  height_range: [1.2, 1.7]
+  sample_number: 20
 
-1. 从 USD 场景生成相机轨迹 JSON。
-2. 在 Isaac Sim 中沿轨迹渲染 RGB、RGBD、depth、instance、shading 等数据。
-
-### 环境
-
-轨迹生成依赖 Python 科学计算和 USD/Open3D 环境；渲染必须在可导入 `isaacsim`、`omni`、`pxr` 的 Isaac Sim Python 环境中运行。
-
-可先安装普通 Python 依赖：
-
-```bash
-pip install -r requirements.txt
+postprocess:
+  min_step_distance: 0.3
+  min_step_angle: 0.15
+  min_turn_distance: 0.15
+  bspline_degree: 3
+  bspline_step: 100
 ```
 
-Isaac Sim、USD Python 绑定和 NVIDIA `omni` 模块通常由 Isaac Sim 环境提供，不建议通过 `pip` 单独安装。
+Supported strategies:
 
-### 数据目录
+| Strategy | Parameters |
+| --- | --- |
+| `astar_nav` | `minimum_distance`, `use_optimizer`, `optimizer_clearance`, `optimizer_lambda_smooth`, `initial_sample_step` |
+| `forward_motion` | `minimum_distance`, `max_retries`, `waypoint_spacing`, `min_wall_clearance` |
 
-默认目录组织如下：
+When `pitch_deg_range` or `height_range` is used, the value is sampled once per floor before post-processing trajectories on that floor.
+
+## Generated Data
+
+Trajectory files:
 
 ```text
-trajectory_tools/
-data/
-  source/
-    GRScenes/
-      part1/
-        101_usd/
-          scene_00001/
-            scene.usd          # 轨迹生成读取：非 copy USD
-            scene_copy.usd     # 渲染读取：文件名需包含 _copy.usd
-data/
-  env/
-    default_no_specular.mdl
-    WhiteMode.mdl
-    default.png
-output/
-  camera_poses/
-  scene_cache/
-  render/
+output/camera_poses/{dataset}/part{part}/{usd}_usd/
+  generation_report_{strategy}.json
+  {scene_name}/{strategy}/
+    f{floor_idx}_t{traj_idx}.json
 ```
 
-如果你的数据不在默认路径，可以用 `--scene-dir`、`--output-dir`、`--cache-dir`、`--data-dir`、`--trajectory-dir` 指定。
-
-### 生成轨迹
-
-在 `trajectory_tools/` 下运行：
-
-```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
-  --dataset GRScenes \
-  --part 1 \
-  --usd 101
-```
-
-只处理一个场景：
-
-```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
-  --part 1 \
-  --usd 101 \
-  --specific scene_00001
-```
-
-使用直线前进策略：
-
-```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/forward_motion.yaml \
-  --part 1 \
-  --usd 101
-```
-
-覆盖 YAML 参数：
-
-```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
-  --part 1 \
-  --usd 101 \
-  --override camera.sample_number=5 strategy.params.minimum_distance=3.0
-```
-
-可选 shortlist CSV：
-
-```csv
-usd_id,scene_id,rating
-101,scene_00001,3
-101,scene_00002,2
-```
-
-运行时添加：
-
-```bash
-python generate_trajectory.py \
-  --config configs/trajectory/strategy/astar_nav.yaml \
-  --part 1 \
-  --usd 101 \
-  --shortlist path/to/scene_shortlist.csv \
-  --min-rating 3
-```
-
-轨迹输出：
-
-```text
-output/camera_poses/GRScenes/part1/101_usd/scene_00001/astar_nav/f0_t0.json
-output/camera_poses/GRScenes/part1/101_usd/generation_report_astar_nav.json
-```
-
-单帧轨迹格式：
+Each `f{floor_idx}_t{traj_idx}.json` file is a list of camera frames:
 
 ```json
 [
-  [x, y, z],
-  [qw, qx, qy, qz]
+  [[x, y, z], [qw, qx, qy, qz]],
+  [[x, y, z], [qw, qx, qy, qz]]
 ]
 ```
 
-其中位置单位为米，四元数为 scalar-first 顺序。
+Positions are in meters. Quaternions use scalar-first order. The camera height is stored as absolute scene height: `floor_height + camera_height`.
 
-### 渲染
+The generation report is keyed by scene name:
 
-渲染需要在 Isaac Sim Python 环境中运行：
+```json
+{
+  "scene_00001": {
+    "status": "success",
+    "floors_detected": 1,
+    "trajectories_generated": 20,
+    "trajectories_attempted": 20,
+    "failure_reasons": [],
+    "prim_filter": {
+      "valid_count": 123,
+      "noise_count": 4,
+      "noise_prims": [],
+      "survival_rates": {}
+    }
+  }
+}
+```
+
+Skipped scenes may only contain `status` and `reason`.
+
+Parsed-scene caches are stored separately:
+
+```text
+output/scene_cache/{dataset}/part{part}/{usd}_usd/{scene_name}/
+  scene_pcd.ply
+  scene_metadata.json
+```
+
+## Render Trajectories
+
+Rendering must run in an Isaac Sim Python environment.
 
 ```bash
-python render_trajectory.py \
+python trajectory_tools/render_trajectory.py \
   --dataset GRScenes \
   --part 1 \
   --usd 101 \
   --strategy astar_nav
 ```
 
-默认渲染 RGBD。选择其他输出类型：
+By default, rendering outputs `rgbd`. Select other output types with flags:
 
 ```bash
-# RGB
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --rgb
+# RGB only
+python trajectory_tools/render_trajectory.py --part 1 --usd 101 --strategy astar_nav --rgb
 
-# Depth
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --depth
+# Depth only
+python trajectory_tools/render_trajectory.py --part 1 --usd 101 --strategy astar_nav --depth
 
-# RGB + depth + instance
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --rgb --depth --instance
+# RGBD plus instance segmentation
+python trajectory_tools/render_trajectory.py --part 1 --usd 101 --strategy astar_nav --rgb --depth --instance
 
-# White material shading
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --shading
+# White-material shading
+python trajectory_tools/render_trajectory.py --part 1 --usd 101 --strategy astar_nav --shading
 
-# Shading with randomized lights
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --shading-randlight
+# White-material shading with randomized lights
+python trajectory_tools/render_trajectory.py --part 1 --usd 101 --strategy astar_nav --shading-randlight
 ```
 
-常用选项：
+Common options:
 
-```bash
-# 全景渲染，输出 2048 x 1024 equirectangular 图像
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --panorama
+| Option | Default | Description |
+| --- | --- | --- |
+| `--scene` | unset | Render one scene by name. |
+| `--scene-idx` | unset | Render one scene by sorted index. |
+| `--trajectory-index` | unset | Render one trajectory index within each selected scene. |
+| `--data-dir` | `data/source` | Root directory containing scene USD assets. |
+| `--trajectory-dir` | `output/camera_poses` | Root directory containing generated trajectories. |
+| `--output-dir` | `output/render` | Root directory for rendered outputs. |
+| `--strategy` | `astar_nav` | One or more strategy names, or `all` to discover available strategies. |
+| `--panorama` | `false` | Render 2048 x 1024 equirectangular frames instead of 800 x 400 perspective frames. |
+| `--auto-expose` | `false` | Enable RTX histogram auto exposure. |
+| `--camera-light` | `false` | Use camera lighting; `rgb` and `shading` outputs are suffixed with `_camlight`. |
+| `--no-video` | `false` | Save frame files without MP4 videos. |
+| `--light-per-trajectory` | `false` | Randomize lights separately for each trajectory. |
 
-# 只渲染一个场景
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --scene scene_00001
-
-# 渲染一个场景中的第 N 条轨迹
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --trajectory-index 0
-
-# 跳过 MP4，只保留帧文件
-python render_trajectory.py --part 1 --usd 101 --strategy astar_nav --no-video
-```
-
-渲染输出：
+Rendering loads:
 
 ```text
-output/render/GRScenes/part1/101_usd/scene_00001/astar_nav/f0_t0/
-  camera_poses.json
-  camera_intrinsic.json
-  rgb/
-    0.jpg
-  depth/
-    0.npy
-  instance/
-    0_seg.pkl
-  shading/
-    0.jpg
-  rgb.mp4
+data/source/{dataset}/part{part}/{usd}_usd/{scene_name}/{single_usd_file}.usd
+output/camera_poses/{dataset}/part{part}/{usd}_usd/{scene_name}/{strategy}/f0_t0.json
 ```
 
-输出类型说明：
+Rendered outputs:
 
-| 类型 | 文件 | 说明 |
+```text
+output/render/{dataset}/part{part}/{usd}_usd/{scene_name}/{strategy}/{trajectory_name}/
+  camera_poses.json
+  rgb/*.jpg
+  depth/*.npy
+  instance/*_seg.pkl
+  shading/*.jpg
+  shading_randlight/*.jpg
+  rgb.mp4
+  shading.mp4
+  shading_randlight.mp4
+  camera_intrinsic.json
+  camera_intrinsic_rgb.json
+  camera_intrinsic_depth.json
+  camera_intrinsic_instance.json
+```
+
+Output details:
+
+| Type | Files | Notes |
 | --- | --- | --- |
-| `rgb` | `.jpg`, `.mp4` | 普通 RGB |
-| `rgbd` | `rgb/*.jpg`, `depth/*.npy`, `rgb.mp4` | RGB 和深度一起输出 |
-| `depth` | `.npy` | float16 深度，单位米 |
-| `instance` | `*_seg.pkl` | instance mask 和 id 映射 |
-| `shading` | `.jpg`, `.mp4` | WhiteMode 材质下的 shading |
-| `shading_randlight` | `.jpg`, `.mp4`, `light_params.json` | 随机光照 shading |
+| `rgb` | `rgb/*.jpg`, `rgb.mp4`, `camera_intrinsic_rgb.json` | Standard RGB frames. |
+| `rgbd` | `rgb/*.jpg`, `depth/*.npy`, `rgb.mp4`, `camera_intrinsic.json` | Selected by default or by `--rgb --depth`. |
+| `depth` | `depth/*.npy`, `camera_intrinsic_depth.json` | Depth is saved as float16 meters. |
+| `instance` | `instance/*_seg.pkl`, `camera_intrinsic_instance.json` | Pickle payload contains instance mask data and ID metadata. |
+| `shading` | `shading/*.jpg`, `shading.mp4` | Uses the WhiteMode material setup. |
+| `shading_randlight` | `shading_randlight/*.jpg`, `shading_randlight.mp4` | Randomized lighting; `light_params.json` is saved per scene/strategy by default or per trajectory with `--light-per-trajectory`. |
 
-重新运行同一命令时，已完成的轨迹输出会自动跳过。
+Re-running the same render command skips outputs that already contain the expected frame count and required metadata files.
