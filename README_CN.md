@@ -102,46 +102,12 @@ pip install isaacsim==4.1.0 isaacsim-extscache-physics==4.1.0 isaacsim-extscache
 ```
 
 ### 数据准备
-请参阅[指南](https://github.com/InternRobotics/InternScenes/tree/master/data)了解下载和组织方式。
+请参阅[数据指南](data/README_CN.md)了解数据下载与组织方式。
 
-```shell
-InternScenes-Real2Sim/
-|-- Assets_library/                 # 场景资产库
-  |-- objaverse/                      # 1. Objaverse 资产库    
-  |-- hssd-models/                    # 2. HSSD 资产库 
-  |-- 3D-FUTURE-model/                # 3. 3D-FUTURE 资产库
-  |-- gr100/                          # 4. GRScenes-100 资产库
-  |-- partNet-mobility/               # 5. PartNet-Mobility 资产库
-  |-- gen-assets/                     # 6. 生成资产库
-|-- Layout_info/                   
-  |-- scan_id/
-    |-- StructureMesh/              # 地板和墙壁的 3D 网格
-      |-- wall.glb     
-    |-- layout.json                 # 场景布局 json
-```
+InternScenes 使用两类数据：
 
-布局格式如下：
-```json
-[
-    {
-        "id": 1,
-        "category": "chair",
-        "model_uid": "partnet_mobility/39551",
-        "bbox": [
-            1.041122286614026,
-            -1.2630096162069782,
-            0.37856578639578786,
-            0.42791932981359787,
-            0.4573552539873118,
-            0.7564487395312743,
-            1.384006110201953,
-            0.0,
-            -0.0
-        ]
-    },
-   ...
-]
-```
+1. **Real2Sim 布局数据**：`data/Layout_info/{dataset}/{scan_id}/` 保存场景结构网格和 `layout.json` 标注。完整目录结构和布局格式请参阅 [Real2Sim 数据指南](data/README_CN.md#internscenes-real2sim-数据准备)。
+2. **轨迹与渲染数据**：`trajectory_tools` 从 `data/source/{dataset}/part{part}/{usd}_usd/` 读取 USD 场景资产，使用 `data/env/` 中的渲染资源，并将轨迹、缓存和渲染结果写入 `output/`。详情请参阅[轨迹与渲染数据](data/README_CN.md#轨迹与渲染数据)和[轨迹工具](trajectory_tools/README_CN.md)。
 
 ## 教程
 我们提供了一个简单的教程[在此](https://github.com/InternRobotics/InternScenes/blob/master/tutorial/tutorial.ipynb)，作为数据集可视化和基本用法的指南。欢迎尝试并提出建议！

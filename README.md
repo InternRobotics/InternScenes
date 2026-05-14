@@ -107,46 +107,12 @@ pip install isaacsim==4.1.0 isaacsim-extscache-physics==4.1.0 isaacsim-extscache
 ``` -->
 
 ### Data Preparation
-Please refer to the [guide](https://github.com/InternRobotics/InternScenes/tree/master/data) for downloading and organization.
+Please refer to the [data guide](data/README.md) for downloading and organizing the dataset.
 
-```shell
-InternScenes-Real2Sim/
-|-- Assets_library/                 # Assets library of scenes
-  |-- objaverse/                      # 1. Objaverse assets library    
-  |-- hssd-models/                    # 2. HSSD assets library 
-  |-- 3D-FUTURE-model/                # 3. 3D-FUTURE assets library
-  |-- gr100/                          # 4. GRScenes-100 assets library
-  |-- partNet-mobility/               # 5. PartNet-Mobility assets library
-  |-- gen-assets/                     # 6. Generated assets library
-|-- Layout_info/                   
-  |-- scan_id/
-    |-- StructureMesh/              # 3D mesh of the floor and walls
-      |-- wall.glb     
-    |-- layout.json                 # Layout json of the scene
-```
+InternScenes uses two data groups:
 
-The layout format is listed as follows:
-```json
-[
-    {
-        "id": 1,
-        "category": "chair",
-        "model_uid": "partnet_mobility/39551",
-        "bbox": [
-            1.041122286614026,
-            -1.2630096162069782,
-            0.37856578639578786,
-            0.42791932981359787,
-            0.4573552539873118,
-            0.7564487395312743,
-            1.384006110201953,
-            0.0,
-            -0.0
-        ]
-    },
-   ...
-]
-```
+1. **Real2Sim layout data**: `data/Layout_info/{dataset}/{scan_id}/` stores the scene structure mesh and `layout.json` annotations. See the [Real2Sim data guide](data/README.md#prepare-internscenes-real2sim-data) for the full directory layout and layout schema.
+2. **Trajectory and rendering data**: `trajectory_tools` reads USD scene assets from `data/source/{dataset}/part{part}/{usd}_usd/`, uses rendering resources from `data/env/`, and writes trajectories, caches, and rendered frames under `output/`. See [Trajectory and Rendering Data](data/README.md#trajectory-and-rendering-data) and [the trajectory tools](trajectory_tools/README.md) for details.
 
 ## 📖 Tutorial
 We provide a simple tutorial [here](https://github.com/InternRobotics/InternScenes/blob/master/tutorial/tutorial.ipynb) as a guideline for the visualization and basic usage of our dataset. Welcome to try and post your suggestions!
